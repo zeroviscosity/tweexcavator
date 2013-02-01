@@ -11,31 +11,29 @@ from tweepy import Stream
 
 class Tweexcavator(StreamListener):
     """Overrides tweepy's StreamListener class in order to add a database
-    connection and save incoming tweets."""
-    
+    connection and save incoming tweets."""    
     def establish_db_connection(self, host, name, collection):
         """Used to establish the connection to MongoDB and open the requested
-        connection."""
-        
+        connection."""        
         try:
-            connection = MongoClient(host)
-            db = connection[name]
-            self.collection = db[collection]
+            self.connection = MongoClient(host)
             print "Successfully connected to database"            
         except ConnectionFailure, e:
             sys.stderr.write("Failed to connect to MongoDB: %s\n" % e)
             sys.exit(1)
+                    
+        self.db = self.connection[name]
+        self.collection = self.db[collection]
 
     def on_status(self, status):
         """Overrides the on_status method of tweepy's StreamListener in order 
-        to save tweet data in the database collection."""
-      
-        tweet = { "id": status.id,
-                  "text": status.text,
-                  "created_at": status.created_at,
-                  "author": {
-                    "name": status.author.name,
-                    "screen_name": status.author.screen_name } }
+        to save tweet data in the database collection."""      
+        tweet = {"id": status.id,
+                 "text": status.text,
+                 "created_at": status.created_at,
+                 "author": {
+                   "name": status.author.name,
+                   "screen_name": status.author.screen_name}}
         try:
             self.collection.insert(tweet)
             print "Successfully saved tweet %d" % status.id
